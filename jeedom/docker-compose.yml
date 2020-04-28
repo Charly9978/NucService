@@ -1,0 +1,61 @@
+version: "3.3"
+
+
+services:
+  jeedom-mysql:
+    # replace username/repo:tag with your name and image details
+    image: mariadb:10.4
+    restart: always
+    networks:
+      - internal
+    volumes: 
+      - jeedomDataBase:/var/lib/mysql
+    container_name: jeedom-mysql
+    environment: 
+      MYSQL_ROOT_PASSWORD: MmADatal42
+      MYSQL_USER: jeedom
+      MYSQL_PASSWORD: MmADatal42
+
+  jeedom-server:
+    # replace username/repo:tag with your name and image details
+    image: jeedom/jeedom:master
+    restart: always
+    depends_on:
+      - jeedom-mysql
+    networks:
+      - webgateway
+      - internal
+    ports:
+      - "9080:80"
+      - "9022:22"
+    devices: 
+      - "dev/ttyUSB0:/dev/ttyUSB0"
+      - "/dev/ttyACM0:/dev/ttyACM0"
+    volumes: 
+      - jeedomServer:/var/www/html
+    container_name: jeedom-server
+    environment: 
+      ROOT_PASSWORD: MmADatal42
+    labels:
+     - "traefik.enable=true"
+     - "traefik.http.routers.jeedom.middlewares=https-only-jeedom"
+     - "traefik.http.middlewares.https-only-jeedom.redirectscheme.scheme=https"
+     - "traefik.http.routers.jeedom.rule=Host(`jeedom.galoubenj.top`)"
+     - "traefik.http.routers.jeedom.entrypoints=web"
+     - "traefik.http.routers.jeedom-secured.rule=Host(`jeedom.galoubenj.top`)"                                                                                                                                                                
+     - "traefik.http.routers.jeedom-secured.entrypoints=websecure"
+     - "traefik.http.routers.jeedom-secured.tls.certresolver=myhttpchallenge"
+     - "traefik.http.services.jeedom.loadbalancer.server.port=80"
+     - "traefik.docker.network=traefik_webgateway"
+      
+
+networks:
+  webgateway:
+    external:
+      name: traefik_webgateway
+  internal: 
+
+volumes:
+  jeedomServer:
+  jeedomDataBase:
+    
