@@ -1,0 +1,52 @@
+version: '2'
+
+volumes:
+  nextcloud:
+  dbnextcloud:
+
+networks:
+  webgateway:
+    external:
+      name: traefik_webgateway
+  internal:
+
+services:
+  db:
+    image: mariadb
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    restart: always
+    volumes:
+      - dbnextcloud:/var/lib/mysql
+    container_name: nextcloud-mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=${PASSWORD}
+      - MYSQL_PASSWORD=${PASSWORD}
+      - MYSQL_DATABASE=${DATABASE}
+      - MYSQL_USER=${USER}
+    networks:
+      - internal
+
+  app:
+    image: nextcloud
+    ports:
+      - 8086:80
+    links:
+      - db
+    volumes:
+      - nextcloud:/var/www/html
+    restart: always
+    container_name: nextcloud-server
+    networks:
+        - webgateway
+        - internal
+    labels:
+     - "traefik.enable=true"
+     - "traefik.http.routers.nextcloud.middlewares=https-only-nextcloud"
+     - "traefik.http.middlewares.https-only-nextcloud.redirectscheme.scheme=https"
+     - "traefik.http.routers.nextcloud.rule=Host(`drive.galoubenj.top`)"
+     - "traefik.http.routers.nextcloud.entrypoints=web"
+     - "traefik.http.routers.nextcloud-secured.rule=Host(`drive.galoubenj.top`)"                                                                                                                                                                
+     - "traefik.http.routers.nextcloud-secured.entrypoints=websecure"
+     - "traefik.http.routers.nextcloud-secured.tls.certresolver=myhttpchallenge"
+     - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
+     - "traefik.docker.network=traefik_webgateway"

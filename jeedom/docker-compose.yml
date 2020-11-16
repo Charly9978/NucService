@@ -12,9 +12,9 @@ services:
       - jeedomDataBase:/var/lib/mysql
     container_name: jeedom-mysql
     environment: 
-      MYSQL_ROOT_PASSWORD: MmADatal42
-      MYSQL_USER: jeedom
-      MYSQL_PASSWORD: MmADatal42
+      MYSQL_ROOT_PASSWORD: ${PASSWORD}
+      MYSQL_USER: ${USER}
+      MYSQL_PASSWORD: ${PASSWORD}
 
   jeedom-server:
     # replace username/repo:tag with your name and image details
@@ -35,7 +35,7 @@ services:
       - jeedomServer:/var/www/html
     container_name: jeedom-server
     environment: 
-      ROOT_PASSWORD: MmADatal42
+      ROOT_PASSWORD: ${PASSWORD}
     labels:
      - "traefik.enable=true"
      - "traefik.http.routers.jeedom.middlewares=https-only-jeedom"
